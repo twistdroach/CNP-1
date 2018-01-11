@@ -1,3 +1,33 @@
+.ifndef __MACROS_H__
+__MACROS_H__ = 1
+
+.macro			puts string
+				.scope
+				jmp continue
+text:			.asciiz string
+continue:
+				lda #>text
+				ldy #<text
+				jsr write_buffer
+				.endscope
+.endmacro
+
+.macro			putsln string
+				.scope
+				jmp continue
+text:			.asciiz string
+continue:
+				lda #>text
+				ldy #<text
+				jsr write_bufferln
+				.endscope
+.endmacro
+
+
+;;;;;;;; stolen from
+;;;;;;;; http://www.grappendorf.net/projects/6502-home-computer/
+;;;;;;;;
+
 ; Push A and X, destroys A
 .macro phax
   pha
@@ -51,3 +81,5 @@
   lda #>(value)
   sta reg + 1
 .endmacro
+
+.endif

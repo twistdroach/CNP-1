@@ -1,0 +1,171 @@
+				.include "io.inc65"
+				.include "macros.inc65"
+				.include "monitor.s65"
+				.import   __RAM_START__, __RAM_SIZE__
+
+
+				.zeropage
+				
+      			BUFADR:		.res 2			;scratchpad/address buffer for bios calls
+      			POSTADR: 	.res 2			;scratchpad for post calls
+
+				.bss
+				SCRATCH: 	.res 3
+				INPUT_BUF:  .res 256
+
+				.code
+				
+.export initialize
+initialize:	
+;;;;;;machine specific
+init_acia:       lda #%00001011				;No parity, no echo, no interrupt
+                 sta ACIA_COMMAND
+                 lda #%00011111				;1 stop bit, 8 data bits, 19200 baud
+                 sta ACIA_CONTROL
+                 
+
+				putsln "Welcome to CNP-1"
+				putsln "16K RAM 0000 to 3FFF"
+				putsln "32k ROM 8000 to FFFF"
+				putsln "6551 ACIA at 4100"
+				putsln ""
+				
+				rts
+;;;;;;;;;;;;;;;;;;;;;;;;;; POST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+.export test_memory
+.proc test_memory
+				 puts "Testing RAM Page $05"
+				 lda #>(__RAM_START__)
+				 tax
+				 jsr test_page
+
+				 
+				 lda #>SCRATCH
+				 sta R0+1
+				 lda #<SCRATCH
+				 sta R0
+loop:			 inx 						; move to next page
+				 lda #$1B					; move cursor back 2 and print page
+				 jsr write_char
+				 puts "[2D"
+				 txa
+				 jsr fmt_hex_string
+				 lda SCRATCH
+				 jsr write_char
+				 lda SCRATCH+1
+				 jsr write_char
+				 lda SCRATCH+2
+				 jsr write_char
+				 txa
+				 cmp #>(__RAM_START__ + __RAM_SIZE__)
+				 beq exit_memtest
+				 jsr test_page				; test page
+				 ;;;no exit!
+				 jmp loop
+				 
+exit_memtest:	 putsln ""
+				 rts
+.endproc
+
+.proc test_page							;test a page of memory
+				sta POSTADR+1				;A should hold page to test
+				ldy #$00
+				sty POSTADR
+				
+				lda #$FF						;A holds test pattern
+				jsr test_page_w_pattern		;test page
+				lda #$AA
+				jsr test_page_w_pattern
+				lda #$55
+				jsr test_page_w_pattern
+				lda #%00010001
+				jsr test_page_w_pattern
+				lda #%00100010
+				jsr test_page_w_pattern
+				lda #%01000100
+				jsr test_page_w_pattern
+				lda #%10001000
+				jsr test_page_w_pattern
+				lda #%11101110
+				jsr test_page_w_pattern
+				lda #%11011101
+				jsr test_page_w_pattern
+				lda #%10111011
+				jsr test_page_w_pattern
+				lda #%01110111
+				jsr test_page_w_pattern
+				lda #$00
+				jsr test_page_w_pattern
+				rts
+				
+				
+test_page_w_pattern:	ldy #$FF			; Start at top of page
+fill_loop:				sta (POSTADR),y		; fill page with pattern
+						dey
+						cpy #$FF
+						bne fill_loop
+						ldy #$FF		 
+compare_loop:			cmp (POSTADR),y		; compare page with pattern
+						bne error
+						dey
+						cpy #$FF
+						beq success
+						jmp compare_loop
+						
+success:				;puts "Ok"
+						rts
+
+error:					putsln ""
+						putsln "Error occurred"
+error_hang:				jmp error_hang
+						rts
+
+.endproc
+
+;;;;;;;;;;;;;;;;;;;;;;;;;; text output routines ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+.export write_bufferln
+.proc write_bufferln
+				jsr write_buffer
+				lda #>lf
+				ldy #<lf
+				jsr write_buffer
+				rts
+
+lf:				.byte $0d,$0a,$00
+.endproc
+
+.export write_buffer
+.proc write_buffer							;output a \0 terminated string to the user
+				sta	BUFADR+1				;A/Y should hold pointer to string
+				sty BUFADR
+				ldy #0
+write_loop:		
+				lda (BUFADR),y
+				beq exit
+				jsr write_char
+				iny
+				jmp write_loop
+
+exit:			rts
+.endproc
+
+;;;;machine specific
+.export write_char
+.proc write_char
+				sta ACIA_DATA				; write a single character, machine dependent
+wait_txd_empty:	lda ACIA_STATUS				; A should contain char
+				and #$10
+				beq wait_txd_empty
+				rts
+.endproc
+
+;;;;;;;;;;;;;;;;;;;;;;;;;; text input routines ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;machine specific
+.export read_char
+.proc read_char
+				lda ACIA_STATUS ; Read the ACIA status
+				and #$08       ; Is the rx register empty?
+				beq read_char  ; Yes, wait for it to fill
+        		lda ACIA_DATA     ; Otherwise, read into accumulator
+        		rts
+.endproc

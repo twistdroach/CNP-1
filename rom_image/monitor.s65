@@ -1,4 +1,7 @@
-					.include "macros.asm"
+.ifndef __MONITOR_H__
+__MONITOR_H__ = 1
+
+					.include "macros.inc65"
 
 					.zeropage
 				R0:		.res 2
@@ -40,3 +43,5 @@ fmt_hex_string:     sta TMP0
                     sta (R0),y
                     play
                     rts
+                    
+.endif

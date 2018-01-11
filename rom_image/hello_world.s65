@@ -1,0 +1,37 @@
+
+
+                .setcpu "65c02"
+
+				.include "io.inc65"
+				.include "monitor.s65"
+				.include "bios.inc65"
+				
+				
+
+                 .segment "VECTORS"
+
+                 .word   nmi
+                 .word   reset
+                 .word   irq
+
+                 .code
+
+reset:           jmp main
+
+nmi:             rti
+
+irq:             rti
+
+main:
+				 ldx #$FF				;set stack pointer
+				 txs
+				 cld					;clear decimal mode
+				 jsr initialize
+				 
+;post			 
+				 jsr test_memory
+
+doit:			 putsln "Hello World!"
+loop:			 jsr read_char
+				 jsr write_char
+				 jmp loop
