@@ -4,3 +4,4 @@
 .import write_buffer
 .import write_char
 .import read_char
+.import get_line

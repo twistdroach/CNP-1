@@ -6,9 +6,13 @@ __MACROS_H__ = 1
 				jmp continue
 text:			.asciiz string
 continue:
+				pha
+				phy
 				lda #>text
 				ldy #<text
 				jsr write_buffer
+				ply
+				pla
 				.endscope
 .endmacro
 
@@ -17,9 +21,13 @@ continue:
 				jmp continue
 text:			.asciiz string
 continue:
+				pha
+				phy
 				lda #>text
 				ldy #<text
 				jsr write_bufferln
+				ply
+				pla
 				.endscope
 .endmacro
 

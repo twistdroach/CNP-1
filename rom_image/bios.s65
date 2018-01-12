@@ -1,3 +1,5 @@
+				.setcpu "65c02"
+				
 				.include "io.inc65"
 				.include "macros.inc65"
 				.include "monitor.s65"
@@ -7,11 +9,12 @@
 				.zeropage
 				
       			BUFADR:		.res 2			;scratchpad/address buffer for bios calls
-      			POSTADR: 	.res 2			;scratchpad for post calls
+      			POSTADR: 	.res 2			;scratchpad for POST calls
 
 				.bss
 				SCRATCH: 	.res 3
-				INPUT_BUF:  .res 256
+				BUFLEN:		.res 1
+				BUFIDX:		.res 1
 
 				.code
 				
@@ -126,16 +129,22 @@ error_hang:				jmp error_hang
 .export write_bufferln
 .proc write_bufferln
 				jsr write_buffer
+				pha
+				phy
 				lda #>lf
 				ldy #<lf
 				jsr write_buffer
+				ply
+				pla
 				rts
 
 lf:				.byte $0d,$0a,$00
 .endproc
 
 .export write_buffer
-.proc write_buffer							;output a \0 terminated string to the user
+.proc write_buffer
+				pha
+				phy							;output a \0 terminated string to the user
 				sta	BUFADR+1				;A/Y should hold pointer to string
 				sty BUFADR
 				ldy #0
@@ -146,7 +155,9 @@ write_loop:
 				iny
 				jmp write_loop
 
-exit:			rts
+exit:			ply
+				pla
+				rts
 .endproc
 
 ;;;;machine specific
@@ -168,4 +179,75 @@ wait_txd_empty:	lda ACIA_STATUS				; A should contain char
 				beq read_char  ; Yes, wait for it to fill
         		lda ACIA_DATA     ; Otherwise, read into accumulator
         		rts
+.endproc
+
+.export get_line
+.proc get_line					;;;;;;;;;;;TODO convert for \0 terminated...doesn't work with the print methods above
+;;;; from Levanthal - Assembly Language Subroutines
+DELKEY	= $18 ; delete line (ctrl-x)
+BSKEY	= $08
+CRKEY	= $0d
+SPACE	= $20
+BELL	= $07
+CSRLEFT	= $08
+
+;Save params
+				sta BUFADR+1
+				sty BUFADR
+				stx BUFLEN
+				
+init:
+				lda #$00
+				sta BUFIDX
+				
+				;read chars until carriage return
+rdloop:
+				jsr read_char
+				cmp #CRKEY			; exit if \r is pressed
+				beq exitrd
+				
+				cmp #BSKEY			; handle backspace being pressed
+				bne rdlp1			; not backspace so continue
+				jsr backsp
+				jmp rdloop
+rdlp1:
+				cmp #DELKEY			; handle line delete key
+				bne rdlp2			; not line delete so continue
+del1:
+				jsr backsp			; clear line by backspacing until empty
+				lda BUFIDX
+				bne del1
+				beq rdloop			; all clear, get another char
+				
+				; not a special char, now make sure
+				; buffer has room, then store and echo
+rdlp2:
+				ldy BUFIDX
+				cpy BUFLEN
+				bcc strch			; buffer has room, so branch to store it
+				lda #BELL
+				jsr write_char		; buffer is full, yell at user and start again
+				jmp rdloop				
+strch:
+				sta (BUFADR),y		; store in buffer
+				jsr write_char		; echo char to user
+				inc BUFIDX
+				jmp rdloop			; get next char
+exitrd:
+				ldx BUFIDX
+				rts
+backsp:
+				lda BUFIDX			; checkfor empty buffer
+				beq exit_backsp
+				
+				lda #>delete_string
+				ldy #<delete_string
+				jsr write_buffer
+				dec BUFIDX
+				beq exit_backsp
+				jmp backsp
+exit_backsp:
+				rts
+				
+delete_string: .byte  CSRLEFT,SPACE,CSRLEFT,$00    ;;;;;TODO need working delete string
 .endproc

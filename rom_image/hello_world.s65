@@ -31,7 +31,16 @@ main:
 ;post			 
 				 jsr test_memory
 
-doit:			 putsln "Hello World!"
-loop:			 jsr read_char
-				 jsr write_char
-				 jmp loop
+doit:			 puts "Type something->"
+				 lda #>buffer
+				 ldy #<buffer
+				 ldx #$14   ;;20 chars
+				 jsr get_line
+				 putsln ""
+				 lda #>buffer
+				 ldy #<buffer
+				 jsr write_bufferln
+loop:			 jmp loop
+
+				.bss
+buffer:			.res 20
