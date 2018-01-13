@@ -1,0 +1,14 @@
+.ifndef __ANSI_TERMINAL_SEQUENCES_H__
+__ANSI_TERMINAL_SEQUENCES_H__ = 1
+
+;;;;;; todo - convert this to inc/s65 set
+
+ESCAPE=$1B
+LEFT_BRACKET=$5B
+NULL=$00
+BELL	= $07
+
+					.code
+CURSOR_LEFT_SEQ:	.byte ESCAPE,LEFT_BRACKET,"1D",NULL
+
+.endif

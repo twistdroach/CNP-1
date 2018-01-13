@@ -3,12 +3,14 @@
 				.include "io.inc65"
 				.include "macros.inc65"
 				.include "monitor.s65"
+				.include "ansi_terminal_sequences.inc65"
 				.import   __RAM_START__, __RAM_SIZE__
 
 
 				.zeropage
 				
       			BUFADR:		.res 2			;scratchpad/address buffer for bios calls
+      			IBUFADR:	.res 2			;pointer for input buffer TODO = find better way to do this
       			POSTADR: 	.res 2			;scratchpad for POST calls
 
 				.bss
@@ -182,23 +184,21 @@ wait_txd_empty:	lda ACIA_STATUS				; A should contain char
 .endproc
 
 .export get_line
-.proc get_line					;;;;;;;;;;;TODO convert for \0 terminated...doesn't work with the print methods above
+.proc get_line
 ;;;; from Levanthal - Assembly Language Subroutines
 DELKEY	= $18 ; delete line (ctrl-x)
 BSKEY	= $08
 CRKEY	= $0d
-SPACE	= $20
-BELL	= $07
-CSRLEFT	= $08
 
 ;Save params
-				sta BUFADR+1
-				sty BUFADR
+				sta IBUFADR+1
+				sty IBUFADR
+				dex					; we need space for a terminating \0
 				stx BUFLEN
 				
 init:
 				lda #$00
-				sta BUFIDX
+				sta BUFIDX         
 				
 				;read chars until carriage return
 rdloop:
@@ -229,25 +229,25 @@ rdlp2:
 				jsr write_char		; buffer is full, yell at user and start again
 				jmp rdloop				
 strch:
-				sta (BUFADR),y		; store in buffer
+				sta (IBUFADR),y		; store in buffer
 				jsr write_char		; echo char to user
 				inc BUFIDX
 				jmp rdloop			; get next char
 exitrd:
+				lda #$00			; store string terminating null
+				ldy BUFIDX
+				sta (IBUFADR),y
 				ldx BUFIDX
+				inx
 				rts
 backsp:
 				lda BUFIDX			; checkfor empty buffer
 				beq exit_backsp
 				
-				lda #>delete_string
-				ldy #<delete_string
+				lda #>CURSOR_LEFT_SEQ
+				ldy #<CURSOR_LEFT_SEQ
 				jsr write_buffer
 				dec BUFIDX
-				beq exit_backsp
-				jmp backsp
-exit_backsp:
-				rts
-				
-delete_string: .byte  CSRLEFT,SPACE,CSRLEFT,$00    ;;;;;TODO need working delete string
+exit_backsp:	rts
+
 .endproc
