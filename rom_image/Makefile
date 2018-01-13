@@ -6,7 +6,7 @@ CA=ca65
 LD=ld65
 
 PGM=hello_world
-ASM_SOURCES = hello_world.s65 bios.s65
+ASM_SOURCES = hello_world.s65 bios.s65 monitor.s65
 all: rom
 
 #$(PGM): $(PGM).o

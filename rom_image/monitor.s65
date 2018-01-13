@@ -1,15 +1,40 @@
-.ifndef __MONITOR_H__
-__MONITOR_H__ = 1
+					.setcpu "65c02"
 
 					.include "macros.inc65"
+					.include "bios.inc65"
 
 					.zeropage
+				.exportzp R0
 				R0:		.res 2
 				TMP0:	.res 2
 
 					.code
+					
+.export monitor_entry
+.proc monitor_entry
+				putsln "Welcome to the Roach Monitor"
+				putsln ""
+loop:
+				puts "RMON>"
+				lda #>buffer
+				ldy #<buffer
+				ldx #$14   ;;20 chars
+				jsr get_line
+				putsln ""
+				lda #>buffer
+				ldy #<buffer
+				jsr write_bufferln
+				jmp loop
+.endproc
+
+
+
+
+
+
 ; Convert the 4-bit value of the accu into it's hex ascii character
 ; The hex ascii character is returned in the accu
+.export fmt_hex_char
 fmt_hex_char:       cmp #10
                     bcc @less_then_10
 @greater_then_10:   sec
@@ -23,6 +48,7 @@ fmt_hex_char:       cmp #10
 					
 ; Format the value of the accu as a hex string
 ; The string is written into (R0)..(R0)+2 (3 bytes)
+.export fmt_hex_string
 fmt_hex_string:     sta TMP0
                     phay
                     ldy #0
@@ -43,5 +69,6 @@ fmt_hex_string:     sta TMP0
                     sta (R0),y
                     play
                     rts
-                    
-.endif
+
+					.bss
+buffer:				.res 20             

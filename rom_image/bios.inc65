@@ -1,3 +1,6 @@
+.ifndef __BIOS_H__
+__BIOS_H__  = 1
+
 .import initialize
 .import test_memory
 .import write_bufferln
@@ -5,3 +8,5 @@
 .import write_char
 .import read_char
 .import get_line
+
+.endif

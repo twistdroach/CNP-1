@@ -3,3 +3,5 @@
 *.map
 *.list
 *.lst
+*.swp
+rom.bin

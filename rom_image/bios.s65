@@ -2,7 +2,7 @@
 				
 				.include "io.inc65"
 				.include "macros.inc65"
-				.include "monitor.s65"
+				.include "monitor.inc65"
 				.include "ansi_terminal_sequences.inc65"
 				.import   __RAM_START__, __RAM_SIZE__
 
@@ -29,7 +29,7 @@ init_acia:       lda #%00001011				;No parity, no echo, no interrupt
                  sta ACIA_CONTROL
                  
 
-				putsln "Welcome to CNP-1"
+				putsln "CNP-1"
 				putsln "16K RAM 0000 to 3FFF"
 				putsln "32k ROM 8000 to FFFF"
 				putsln "6551 ACIA at 4100"
@@ -64,12 +64,13 @@ loop:			 inx 						; move to next page
 				 txa
 				 cmp #>(__RAM_START__ + __RAM_SIZE__)
 				 beq exit_memtest
-				 jsr test_page				; test page
-				 ;;;no exit!
+				 jsr test_page
 				 jmp loop
 				 
-exit_memtest:	 putsln ""
-				 rts
+exit_memtest:	putsln ""
+				putsln ""
+				putsln ""
+				rts
 .endproc
 
 .proc test_page							;test a page of memory

@@ -3,7 +3,7 @@
                 .setcpu "65c02"
 
 				.include "io.inc65"
-				.include "monitor.s65"
+				.include "monitor.inc65"
 				.include "bios.inc65"
 				
 				
@@ -28,19 +28,8 @@ main:
 				 cld					;clear decimal mode
 				 jsr initialize
 				 
-;post			 
+;;;post			 
 				 jsr test_memory
 
-doit:			 puts "Type something->"
-				 lda #>buffer
-				 ldy #<buffer
-				 ldx #$14   ;;20 chars
-				 jsr get_line
-				 putsln ""
-				 lda #>buffer
-				 ldy #<buffer
-				 jsr write_bufferln
-loop:			 jmp loop
-
-				.bss
-buffer:			.res 20
+;;;start the monitor
+				 jmp monitor_entry
