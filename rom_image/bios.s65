@@ -184,9 +184,17 @@ wait_txd_empty:	lda ACIA_STATUS				; A should contain char
         		rts
 .endproc
 
+;;; get_line
+;;;; based on Levanthal - Assembly Language Subroutines
+;;; A -buffer address+1
+;;; Y -buffer address
+;;; X -buffer length
+;;;
+;;; returns
+;;; string in buffer
+;;; 
 .export get_line
 .proc get_line
-;;;; from Levanthal - Assembly Language Subroutines
 DELKEY	= $18 ; delete line (ctrl-x)
 BSKEY	= $08
 CRKEY	= $0d

@@ -4,9 +4,16 @@
 					.include "bios.inc65"
 
 					.zeropage
-				.exportzp R0
-				R0:		.res 2
-				TMP0:	.res 2
+					.exportzp R0
+					R0:				.res 2
+					TMP0:			.res 2
+					MON_MEM_PTR:	.res 2
+
+					.bss
+BUFFER_LENGTH		=	60
+buffer:				.res BUFFER_LENGTH
+tmp_hex_string:		.res 3  
+RES:				.res 2
 
 					.code
 					
@@ -15,22 +22,122 @@
 				putsln "Welcome to the Roach Monitor"
 				putsln ""
 loop:
-				puts "RMON>"
+				puts "RMON>"						; prompt user for a command
 				lda #>buffer
 				ldy #<buffer
-				ldx #$14   ;;20 chars
+				ldx #BUFFER_LENGTH
 				jsr get_line
 				putsln ""
-				lda #>buffer
-				ldy #<buffer
-				jsr write_bufferln
+				lda buffer							; let's interpret user's command
+				beq loop							; user gave us no input, try again
+				cmp #'d'							; dump - display memory
+				beq do_dump
+				cmp #'h'							; help - display help
+				beq do_help
+				putsln "Unknown Command"
+				jmp loop
+				;;the commented code just echos back
+		;		lda #>buffer
+		;		ldy #<buffer
+		;		jsr write_bufferln
+
+do_help:		jmp help
+do_dump:		jmp dump
+
+BYTES_TO_DUMP	= 16
+dump:
+				putsln "---Dump---"
+				lda #>buffer+1
+				sta R0+1
+				lda #<buffer+1
+				sta R0
+				jsr scan_hex16
+				
+				lda RES+1					;;;;;;;;;;;;; TODO something here is broken
+				sta MON_MEM_PTR+1
+				lda RES
+				sta MON_MEM_PTR
+				;artificially set mem pointer to $8000
+				;for this to really work, we'll have to parse this from user input
+				;lda #$80
+				;sta MON_MEM_PTR+1
+				;lda #$00
+				;sta MON_MEM_PTR
+										; print location
+				lda #>tmp_hex_string
+				sta R0+1
+				lda #<tmp_hex_string
+				sta R0
+				lda MON_MEM_PTR+1		; print high byte location
+				jsr fmt_hex_string
+				lda tmp_hex_string
+				jsr write_char
+				lda tmp_hex_string+1
+				jsr write_char
+				lda MON_MEM_PTR			; print low byte location
+				jsr fmt_hex_string
+				lda tmp_hex_string
+				jsr write_char
+				lda tmp_hex_string+1
+				jsr write_char
+				
+				puts ": "
+				
+				ldy #0					; start at ptr
+dump_next_byte:	
+				lda #>tmp_hex_string	; print some bytes of memory
+				sta R0+1				; in hex with spaces between
+				lda #<tmp_hex_string
+				sta R0
+				lda (MON_MEM_PTR),y
+				jsr fmt_hex_string
+				lda tmp_hex_string
+				jsr write_char
+				lda tmp_hex_string+1
+				jsr write_char
+				lda #' '
+				jsr write_char
+				iny						
+				cpy #BYTES_TO_DUMP		; if we've printed 8, then move on
+				bne dump_next_byte
+				
+				puts "    !"
+				;print the ascii version of the bytes
+				ldy #0
+dump_next_char:							; print same bytes as chars
+				lda (MON_MEM_PTR),y
+				cmp #$20				; print a . for anything < $20
+				bcc print_dot
+				cmp #$7F				; print a . for anything >= $7F
+				bcs print_dot
+				jsr write_char
+continue_dump_next_char:
+				iny
+				cpy #BYTES_TO_DUMP
+				bne dump_next_char
+				putsln "!"
+				
+				putsln ""				; end the line and re-enter the monitor loop
+				jmp loop
+				
+print_dot:		puts "."
+				jmp continue_dump_next_char
+
+help:
+				putsln "Roach Monitor Help"
+				putsln ""
+				putsln "h - Print help"
+				putsln "d - Dump memory location"
+				putsln ""
 				jmp loop
 .endproc
 
 
 
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; https://github.com/grappendorf/homecomputer-6502/blob/master/firmware/versions/v7-monitor/string.s65
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Convert the 4-bit value of the accu into it's hex ascii character
 ; The hex ascii character is returned in the accu
@@ -70,5 +177,82 @@ fmt_hex_string:     sta TMP0
                     play
                     rts
 
-					.bss
-buffer:				.res 20             
+; Convert the hex character in the accu to its integer value
+; The integer value is returned in the accu
+scan_hex_char:      cmp #'0'
+                    bcc @invalid
+                    cmp #('9' + 1)
+                    bcs @no_digit
+                    sec
+                    sbc #'0'
+                    rts
+@no_digit:          cmp #'A'
+                    bcc @invalid
+                    cmp #('F' + 1)
+                    bcs @no_upper_hex
+                    sec
+                    sbc #('A' - 10)
+                    rts
+@no_upper_hex:      cmp #'a'
+                    bcc @invalid
+                    cmp #('f' + 1)
+                    bcs @invalid
+                    sec
+                    sbc #('a' - 10)
+                    rts
+@invalid:           lda #0
+                    rts
+
+; Convert two hex characters starting at (R0) into an integer value
+; The integer value is returned in the accu
+scan_hex:           tya
+                    pha
+                    ldy #0
+                    lda (R0),y
+                    jsr scan_hex_char
+                    asl
+                    asl
+                    asl
+                    asl
+                    sta TMP0
+                    iny
+                    lda (R0),y
+                    jsr scan_hex_char
+                    ora TMP0
+                    sta TMP0
+                    pla
+                    tay
+                    lda TMP0
+                    rts
+
+; Convert four hex characters starting at (R0) into an integer value
+; The integer value is returned in RES..RES+1
+scan_hex16:         phay
+                    ldy #0
+                    lda (R0),y
+                    jsr scan_hex_char
+                    asl
+                    asl
+                    asl
+                    asl
+                    sta RES + 1
+                    iny
+                    lda (R0),y
+                    jsr scan_hex_char
+                    ora RES + 1
+                    sta RES + 1
+                    iny
+                    lda (R0),y
+                    jsr scan_hex_char
+                    asl
+                    asl
+                    asl
+                    asl
+                    sta RES
+                    iny
+                    lda (R0),y
+                    jsr scan_hex_char
+                    ora RES
+                    sta RES
+                    play
+                    rts
