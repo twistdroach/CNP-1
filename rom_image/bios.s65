@@ -30,9 +30,9 @@ init_acia:       lda #%00001011				;No parity, no echo, no interrupt
                  
 
 				putsln "CNP-1"
-				putsln "16K RAM 0000 to 3FFF"
-				putsln "32k ROM 8000 to FFFF"
-				putsln "6551 ACIA at 4400"
+				putsln "16K RAM $0000 to $3FFF"
+				putsln "32k ROM $8000 to $FFFF"
+				putsln "6551 ACIA at $4400"
 				putsln ""
 				
 				rts

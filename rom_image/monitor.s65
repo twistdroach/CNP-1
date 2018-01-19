@@ -47,22 +47,16 @@ do_dump:		jmp dump
 BYTES_TO_DUMP	= 16
 dump:
 				putsln "---Dump---"
-				lda #>buffer+1
+				lda #>(buffer+1)
 				sta R0+1
-				lda #<buffer+1
+				lda #<(buffer+1)
 				sta R0
 				jsr scan_hex16
 				
-				lda RES+1					;;;;;;;;;;;;; TODO something here is broken
+				lda RES+1
 				sta MON_MEM_PTR+1
 				lda RES
 				sta MON_MEM_PTR
-				;artificially set mem pointer to $8000
-				;for this to really work, we'll have to parse this from user input
-				;lda #$80
-				;sta MON_MEM_PTR+1
-				;lda #$00
-				;sta MON_MEM_PTR
 										; print location
 				lda #>tmp_hex_string
 				sta R0+1
