@@ -3,7 +3,7 @@
 ;;
 
 
-iobase		=	$4100
+iobase		=	$4400
 iostatus	=	iobase+1
 iocmd		=	iobase+2
 ioctrl		=	iobase+3
