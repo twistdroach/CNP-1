@@ -3,9 +3,10 @@ __MACROS_H__ = 1
 
 .macro			puts string
 				.scope
-				jmp continue
+				.pushseg
+				.segment "STRINGS"
 text:			.asciiz string
-continue:
+				.popseg
 				pha
 				phy
 				lda #>text
@@ -18,9 +19,10 @@ continue:
 
 .macro			putsln string
 				.scope
-				jmp continue
+				.pushseg
+				.segment "STRINGS"
 text:			.asciiz string
-continue:
+				.popseg
 				pha
 				phy
 				lda #>text

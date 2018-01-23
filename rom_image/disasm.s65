@@ -34,6 +34,7 @@
 ; Uncomment next line to link with start address of $A000 for Multi I/0 Board EEPROM.
 ; .org $A000
 ; DISASMCODE should land on a page boundary
+.setcpu "65c02"
 .segment "DISASMCODE"
 
 ; *** CONSTANTS ***
@@ -47,6 +48,7 @@
 ; External Routines
 .include "bios.inc65"
 .include "hex_string_utils.inc65"
+.include "macros.inc65"
 
 
 ; Instructions. Matches entries in table of MNEMONICS
@@ -160,11 +162,8 @@
 .export DISASM_START
 DISASM_START:
 START:
-  JSR PrintCR
-  LDX #<WelcomeString
-  LDY #>WelcomeString
-  JSR PrintString
-  JSR PrintCR
+  putsln ""
+  putsln "DISASM VERSION 0.9 by JEFF TRANTER"
   LDA #<START
   STA ADDR
   LDA #>START
@@ -179,9 +178,7 @@ LOOP:
   SEC
   SBC #1
   BNE LOOP
-  LDX #<ContinueString
-  LDY #>ContinueString
-  JSR PrintString
+  puts "  <SPACE> TO CONTINUE, <ESC> TO STOP"
 @SpaceOrEscape:
   JSR GetKey
   CMP #' '
@@ -531,10 +528,6 @@ DONEOPS:
 ;------------------------------------------------------------------------
 ; Utility functions
 
- ECHO:
- 	jsr write_char
- 	rts				; Woz monitor ECHO routine
-
 ; Print a dollar sign
 ; Registers changed: None
 PrintDollar:
@@ -612,7 +605,7 @@ PrintSpaces:
   PHA
   LDA #SP
 @LOOP:
-  JSR ECHO
+  JSR write_char
   DEX
   BNE @LOOP
   PLA
@@ -622,7 +615,7 @@ PrintSpaces:
 ; Calls Woz monitor ECHO routine
 ; Registers changed: none
 PrintChar:
-  JSR ECHO
+  JSR write_char
   RTS
 
 ; Get character from keyboard
@@ -1036,10 +1029,3 @@ OPCODES2:
  .byte OP_SBC, AM_ABSOLUTE_X         ; $FD
  .byte OP_INC, AM_ABSOLUTE_X         ; $FE
  .byte OP_BBS, AM_ABSOLUTE           ; $FF [65C02 only]
-
-; *** Strings ***
-
-ContinueString:
-  .asciiz "  <SPACE> TO CONTINUE, <ESC> TO STOP"
-WelcomeString:
-  .asciiz "DISASM VERSION 0.9 by JEFF TRANTER"
