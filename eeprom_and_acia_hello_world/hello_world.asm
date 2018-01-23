@@ -29,8 +29,11 @@ init_acia:       lda #%00001011				;No parity, no echo, no interrupt
 write:           ldx #0
 next_char:
 wait_txd_empty:  lda ACIA_STATUS
-                 and #$10
-                 beq wait_txd_empty
+                ; and #$10
+                ; beq wait_txd_empty
+		 lda #$d0
+delay:		dec
+		bne delay
                  lda text,x
                  beq read
                  sta ACIA_DATA
