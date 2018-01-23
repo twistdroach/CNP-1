@@ -8,5 +8,6 @@ __BIOS_H__  = 1
 .import write_char
 .import read_char
 .import get_line
+.import char_avail
 
 .endif

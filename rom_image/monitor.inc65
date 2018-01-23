@@ -2,8 +2,5 @@
 __MONITOR_H__ = 1
 
 .import monitor_entry
-.import fmt_hex_char
-.import fmt_hex_string
-.importzp R0
 
 .endif

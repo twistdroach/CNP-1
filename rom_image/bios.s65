@@ -4,6 +4,7 @@
 				.include "macros.inc65"
 				.include "monitor.inc65"
 				.include "ansi_terminal_sequences.inc65"
+				.include "hex_string_utils.inc65"
 				.import   __RAM_START__, __RAM_SIZE__
 
 
@@ -166,10 +167,16 @@ exit:			ply
 ;;;;machine specific
 .export write_char
 .proc write_char
+				pha
 				sta ACIA_DATA				; write a single character, machine dependent
-wait_txd_empty:	lda ACIA_STATUS				; A should contain char
-				and #$10
-				beq wait_txd_empty
+;;;hack for broken wdc 65c51				
+;wait_txd_empty:	lda ACIA_STATUS				; A should contain char
+;				and #$10
+;				beq wait_txd_empty
+				lda #$d0
+delay:			dec
+				bne delay
+				pla
 				rts
 .endproc
 
@@ -182,6 +189,20 @@ wait_txd_empty:	lda ACIA_STATUS				; A should contain char
 				beq read_char  ; Yes, wait for it to fill
         		lda ACIA_DATA     ; Otherwise, read into accumulator
         		rts
+.endproc
+
+.export char_avail
+.proc char_avail
+				pha
+				lda ACIA_STATUS
+				and #$08			; Is the rx register empty?
+				beq not_avail
+				sec					; Char is avail, set carry and return
+				pla
+				rts
+not_avail:		clc
+				pla
+				rts
 .endproc
 
 ;;; get_line
