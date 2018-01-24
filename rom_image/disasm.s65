@@ -1,3 +1,5 @@
+;;;; originally from
+;;;; https://github.com/jefftranter/6502/blob/master/asm/disasm/disasm.s
 ;
 ; 6502/65C02 Disassembler
 ;
