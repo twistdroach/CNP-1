@@ -180,7 +180,7 @@ LOOP:
   BNE LOOP
   puts "  <SPACE> TO CONTINUE, <ESC> TO STOP"
 @SpaceOrEscape:
-  JSR GetKey
+  JSR read_char
   CMP #' '
   BEQ OUTER
   CMP #ESC
@@ -259,7 +259,7 @@ ONE:
   LDY #3
 MNEM:
   LDA MNEMONICS,X       ; print three chars of mnemonic
-  JSR PrintChar
+  JSR write_char
   INX
   DEY
   BNE MNEM
@@ -305,7 +305,7 @@ DOBB:                   ; handle special BBRn and BBSn instructions
   LDA (ADDR),Y          ; get 1st operand byte (address)
   JSR PrintByte         ; display it
   LDA #','
-  JSR PrintChar
+  JSR write_char
   JSR PrintDollar
 ; Handle relative addressing
 ; Destination address is Current address + relative (sign extended so upper byte is $00 or $FF) + 3
@@ -353,14 +353,14 @@ TRYACC:
   BNE TRYIMM
  .ifndef NOACCUMULATOR
   LDA #'A'
-  JSR PrintChar
+  JSR write_char
  .endif                 ; .ifndef NOACCUMULATOR
   JMP DONEOPS
 TRYIMM:
   CMP #AM_IMMEDIATE
   BNE TRYZP
   LDA #'#'
-  JSR PrintChar
+  JSR write_char
   JSR PrintDollar
   LDY #1
   LDA (ADDR),Y          ; get 1st operand byte (low address)
@@ -533,7 +533,7 @@ DONEOPS:
 PrintDollar:
   PHA
   LDA #'$'
-  JSR PrintChar
+  JSR write_char
   PLA
   RTS
 
@@ -542,9 +542,9 @@ PrintDollar:
 PrintCommaX:
   PHA
   LDA #','
-  JSR PrintChar
+  JSR write_char
   LDA #'X'
-  JSR PrintChar
+  JSR write_char
   PLA
   RTS
 
@@ -553,9 +553,9 @@ PrintCommaX:
 PrintCommaY:
   PHA
   LDA #','
-  JSR PrintChar
+  JSR write_char
   LDA #'Y'
-  JSR PrintChar
+  JSR write_char
   PLA
   RTS
 
@@ -564,9 +564,9 @@ PrintCommaY:
 PrintLParenDollar:
   PHA
   LDA #'('
-  JSR PrintChar
+  JSR write_char
   LDA #'$'
-  JSR PrintChar
+  JSR write_char
   PLA
   RTS
 
@@ -575,7 +575,7 @@ PrintLParenDollar:
 PrintRParen:
   PHA
   LDA #')'
-  JSR PrintChar
+  JSR write_char
   PLA
   RTS
 
@@ -584,9 +584,9 @@ PrintRParen:
 PrintCR:
   PHA
   LDA #CR
-  JSR PrintChar
+  JSR write_char
   LDA #LF
-  JSR PrintChar
+  JSR write_char
   PLA
   RTS
 
@@ -595,7 +595,7 @@ PrintCR:
 PrintSpace:
   PHA
   LDA #SP
-  JSR PrintChar
+  JSR write_char
   PLA
   RTS
 
@@ -609,22 +609,6 @@ PrintSpaces:
   DEX
   BNE @LOOP
   PLA
-  RTS
-
-; Output a character
-; Calls Woz monitor ECHO routine
-; Registers changed: none
-PrintChar:
-  JSR write_char
-  RTS
-
-; Get character from keyboard
-; Returns in A
-; Clears high bit to be valid ASCII
-; Registers changed: A
-GetKey:
-  jsr read_char ; Keyboard data
-  AND #%01111111
   RTS
 
 ; Print 16-bit address in hex
@@ -659,7 +643,7 @@ PrintString:
 @loop:
   LDA (T1),Y
   BEQ done
-  JSR PrintChar
+  JSR write_char
   INY
   BNE @loop       ; if doesn't branch, string is too long
 done:
