@@ -54,7 +54,6 @@ do_disassembler:	jsr DISASM_START
 
 BYTES_TO_DUMP	= 16
 dump:
-				putsln "---Dump---"
 				lda #>(buffer+1)
 				sta R0+1
 				lda #<(buffer+1)
