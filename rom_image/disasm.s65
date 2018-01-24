@@ -166,10 +166,10 @@ DISASM_START:
 START:
   putsln ""
   putsln "DISASM VERSION 0.9 by JEFF TRANTER"
-  LDA #<START
+  puts "Enter address: "
+  jsr get_hex_address_from_user
   STA ADDR
-  LDA #>START
-  STA ADDR+1
+  STY ADDR+1
 OUTER:
   JSR PrintCR
   LDA #23

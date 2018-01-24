@@ -8,6 +8,30 @@ TMP0:	.res 2
 
 .code
 
+; gets user input for a hex address
+; returns addres in A,Y registers
+.export get_hex_address_from_user
+.proc get_hex_address_from_user
+		.pushseg
+		.bss
+BUFFER_LENGTH=5
+buffer: .res BUFFER_LENGTH
+		.popseg
+		
+		lda #>buffer
+		ldy #<buffer
+		ldx #BUFFER_LENGTH
+		jsr get_line
+		lda #>buffer
+		sta R0+1
+		lda #<buffer
+		sta R0
+		jsr scan_hex16
+		lda RES
+		ldy RES+1
+		rts
+.endproc
+
 .export print_byte_as_hex_chars
 print_byte_as_hex_chars:
 		pha

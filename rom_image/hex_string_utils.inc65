@@ -6,6 +6,7 @@ __HEX_STRING_UTILS_H__ = 1
 .import fmt_hex_char
 .import fmt_hex_string
 .import scan_hex16
+.import get_hex_address_from_user
 .importzp R0
 .importzp TMP0
 .import RES
