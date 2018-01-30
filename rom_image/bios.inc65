@@ -9,5 +9,6 @@ __BIOS_H__  = 1
 .import read_char
 .import get_line
 .import char_avail
+.import read_char_nonblocking
 
 .endif

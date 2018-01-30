@@ -33,3 +33,12 @@ main:
 
 ;;;start the monitor
 				 jmp monitor_entry
+
+				 .segment "BIOSJMPTABLE"
+				.word write_bufferln
+				.word write_buffer
+				.word write_char
+				.word read_char
+				.word get_line
+				.word char_avail
+				.word read_char_nonblocking

@@ -1,0 +1,13 @@
+.ifndef __BIOSJMPTABLE_H__
+__BIOSJMPTABLE_H__  = 1
+
+BIOSJMPTABLE=$FF00
+ write_bufferln=$00
+ write_buffer=$02
+ write_char=$04
+ read_char=$06
+ get_line=$08
+ char_avail=$0A
+ read_char_nonblocking=$0C
+ 
+.endif

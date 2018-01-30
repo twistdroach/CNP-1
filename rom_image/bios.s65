@@ -181,6 +181,19 @@ delay:			dec
 .endproc
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;; text input routines ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; carry flag set if char available (and returns char in A)
+; otherwise clears carry flag if no char available
+.export read_char_nonblocking
+				jsr char_avail
+				bcs get_char
+				clc
+				rts
+get_char:
+				jsr read_char
+				sec
+				rts
+.proc read_char_nonblocking
+.endproc
 ;;;;machine specific
 .export read_char
 .proc read_char
