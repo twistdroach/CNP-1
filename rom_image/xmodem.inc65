@@ -1,0 +1,4 @@
+.ifndef __XMODEM_H__
+__XMODEM__ = 1
+.import XModemRcv
+.endif

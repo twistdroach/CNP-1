@@ -5,6 +5,7 @@
 					.include "hex_string_utils.inc65"
 					.include "osi_bas.inc65"
 					.include "disasm.inc65"
+					.include "xmodem.inc65"
 
 					.zeropage
 					MON_MEM_PTR:	.res 2
@@ -38,6 +39,8 @@ loop:
 				beq do_basic
 				cmp #'u'
 				beq do_disassembler
+				cmp #'x'
+				beq do_xmodem_recv
 				putsln "Unknown Command"
 				jmp loop
 				;;the commented code just echos back
@@ -51,6 +54,7 @@ do_basic:			jmp COLD_START
 do_disassembler:	jsr DISASM_START
 					putsln ""
 					jmp loop
+do_xmodem_recv:		jmp XModemRcv
 
 BYTES_TO_DUMP	= 16
 dump:
