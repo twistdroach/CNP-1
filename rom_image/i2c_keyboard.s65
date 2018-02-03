@@ -1,0 +1,60 @@
+
+.include "i2c.inc65"
+.include "io.inc65"
+
+.macro lda_i2c_addr i2c_address, i2c_rw_mode
+       lda #((i2c_address << 1) | i2c_rw_mode)
+.endmacro
+
+CHARS_AVAIL_REG=$01
+NEXT_CHAR_REG=$00
+
+.export i2c_keyboard_chars_avail
+.proc i2c_keyboard_chars_avail		;returns the number of chars available
+		jsr I2C_START
+		lda_i2c_addr I2C_KEYBOARD_ADR, I2C_WRITE
+		jsr SEND_I2C_BYTE
+		bmi return
+		lda #CHARS_AVAIL_REG					; 1=get number of chars in buffer
+		jsr SEND_I2C_BYTE
+		bmi return
+		jsr I2C_STOP
+		
+		jsr I2C_START
+		lda_i2c_addr I2C_KEYBOARD_ADR, I2C_READ
+		jsr SEND_I2C_BYTE
+		bmi return
+		
+		jsr RCV_I2C_BYTE
+		pha
+		jsr I2C_NAK
+		jsr I2C_STOP
+		pla
+return:
+		rts
+.endproc
+
+.export i2c_keyboard_get_char
+.proc i2c_keyboard_get_char
+		jsr I2C_START
+		lda_i2c_addr I2C_KEYBOARD_ADR, I2C_WRITE
+		jsr SEND_I2C_BYTE
+		bmi return
+		lda #NEXT_CHAR_REG					; 0=read chars
+		jsr SEND_I2C_BYTE
+		bmi return
+		jsr I2C_STOP
+
+		jsr I2C_START
+		lda_i2c_addr I2C_KEYBOARD_ADR, I2C_READ
+		jsr SEND_I2C_BYTE
+		bmi return
+		
+		jsr RCV_I2C_BYTE
+		pha
+		jsr I2C_NAK
+		jsr I2C_STOP
+		pla
+return:
+		rts
+.endproc

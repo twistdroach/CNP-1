@@ -1,0 +1,5 @@
+.ifndef __I2C_KEYBOARD_H__
+__I2C_KEYBOARD_H__ = 1
+.import i2c_keyboard_chars_avail
+.import i2c_keyboard_get_char
+.endif

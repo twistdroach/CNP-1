@@ -5,6 +5,8 @@
 				.include "monitor.inc65"
 				.include "ansi_terminal_sequences.inc65"
 				.include "hex_string_utils.inc65"
+				.include "i2c.inc65"
+				.include "i2c_keyboard.inc65"
 				.import   __RAM_START__, __RAM_SIZE__
 
 
@@ -24,13 +26,21 @@
 .export initialize
 initialize:	
 ;;;;;;machine specific
-init_acia:       lda #%00001011				;No parity, no echo, no interrupt
-                 sta ACIA_COMMAND
-                 lda #%00011111				;1 stop bit, 8 data bits, 19200 baud
-                 sta ACIA_CONTROL
-                 
 
-				putsln "CNP-1"
+				;;;; ACIA
+				lda #%00001011				;No parity, no echo, no interrupt
+				sta ACIA_COMMAND
+				lda #%00011111				;1 stop bit, 8 data bits, 19200 baud
+				sta ACIA_CONTROL
+
+				;;;; I2C
+				jsr INIT_I2C
+				
+				;;;; I2C Keyboard Interface
+				       
+
+				;;;; Splash screen
+				putsln .concat("CNP-1 (build ", .string(.time), ")")
 				putsln "16K RAM $0000 to $3FFF"
 				putsln "32k ROM $8000 to $FFFF"
 				putsln "6551 ACIA at $4400"
@@ -184,6 +194,7 @@ delay:			dec
 ; carry flag set if char available (and returns char in A)
 ; otherwise clears carry flag if no char available
 .export read_char_nonblocking
+.proc read_char_nonblocking
 				jsr char_avail
 				bcs get_char
 				clc
@@ -192,23 +203,39 @@ get_char:
 				jsr read_char
 				sec
 				rts
-.proc read_char_nonblocking
 .endproc
+
+;USE_I2C_INPUT=1
 ;;;;machine specific
 .export read_char
 .proc read_char
+
+.ifdef USE_I2C_INPUT
+								;;; Try I2C Keyboard interface
+wait_i2c:		jsr i2c_keyboard_chars_avail
+				beq wait_i2c
+				jsr i2c_keyboard_get_char
+				rts
+.else
+wait_acia:						;;; Check ACIA
 				lda ACIA_STATUS ; Read the ACIA status
-				and #$08       ; Is the rx register empty?
-				beq read_char  ; Yes, wait for it to fill
+				and #$08       ; Is the rx register empty?;
+				beq wait_acia  ; Yes, wait for it to fill
         		lda ACIA_DATA     ; Otherwise, read into accumulator
         		rts
+.endif
 .endproc
 
 .export char_avail
 .proc char_avail
 				pha
+.ifndef USE_I2C_INPUT				
+				;;Check ACIA
 				lda ACIA_STATUS
 				and #$08			; Is the rx register empty?
+.else
+				jsr i2c_keyboard_chars_avail
+.endif
 				beq not_avail
 				sec					; Char is avail, set carry and return
 				pla

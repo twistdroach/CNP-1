@@ -57,11 +57,9 @@ do_disassembler:	jsr DISASM_START
 do_xmodem_recv:		jmp XModemRcv
 
 BYTES_TO_DUMP	= 16
+LINES_TO_DUMP   = 16
 dump:
-				lda #>(buffer+1)
-				sta R0+1
-				lda #<(buffer+1)
-				sta R0
+				ld16 R0, (buffer+1)
 				jsr scan_hex16
 				
 				lda RES+1
@@ -69,10 +67,7 @@ dump:
 				lda RES
 				sta MON_MEM_PTR
 										; print location
-				lda #>tmp_hex_string
-				sta R0+1
-				lda #<tmp_hex_string
-				sta R0
+			    ld16 R0, tmp_hex_string
 				lda MON_MEM_PTR+1		; print high byte location
 				jsr fmt_hex_string
 				lda tmp_hex_string
@@ -135,6 +130,7 @@ help:
 				putsln "d - Dump memory location"
 				putsln "b - Start Microsoft Basic"
 				putsln "u - Start disassembler"
+				putsln "x - Receive data via XModem/CRC and place into memory" 
 				putsln ""
 				jmp loop
 .endproc
