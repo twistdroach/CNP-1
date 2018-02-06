@@ -59,14 +59,15 @@ do_xmodem_recv:		jmp XModemRcv
 BYTES_TO_DUMP	= 16
 LINES_TO_DUMP   = 16
 dump:
+				ldx	#LINES_TO_DUMP
 				ld16 R0, (buffer+1)
 				jsr scan_hex16
-				
+
 				lda RES+1
 				sta MON_MEM_PTR+1
 				lda RES
 				sta MON_MEM_PTR
-										; print location
+start_line:								; print location
 			    ld16 R0, tmp_hex_string
 				lda MON_MEM_PTR+1		; print high byte location
 				jsr fmt_hex_string
@@ -85,12 +86,9 @@ dump:
 				
 				ldy #0					; start at ptr
 dump_next_byte:	
-				lda #>tmp_hex_string	; print some bytes of memory
-				sta R0+1				; in hex with spaces between
-				lda #<tmp_hex_string
-				sta R0
-				lda (MON_MEM_PTR),y
-				jsr fmt_hex_string
+				ld16 R0, tmp_hex_string
+				lda (MON_MEM_PTR),y		; print some bytes of memory
+				jsr fmt_hex_string		; in hex with spaces between
 				lda tmp_hex_string
 				jsr write_char
 				lda tmp_hex_string+1
@@ -115,13 +113,25 @@ continue_dump_next_char:
 				iny
 				cpy #BYTES_TO_DUMP
 				bne dump_next_char
-				putsln "!"
+				putsln "!"				; end of the dump
 				
-				putsln ""				; end the line and re-enter the monitor loop
-				jmp loop
+				dex						; move the ptr and dump another set of bytes
+				beq return_to_mon_loop
+				clc
+				lda MON_MEM_PTR
+				adc #BYTES_TO_DUMP
+				sta MON_MEM_PTR
+				bcc no_carry
+				inc MON_MEM_PTR+1
+no_carry:		
+				jmp start_line
 				
 print_dot:		puts "."
 				jmp continue_dump_next_char
+
+return_to_mon_loop:
+				putsln ""
+				jmp loop
 
 help:
 				putsln "Roach Monitor Help"
