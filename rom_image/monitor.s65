@@ -54,7 +54,8 @@ do_basic:			jmp COLD_START
 do_disassembler:	jsr DISASM_START
 					putsln ""
 					jmp loop
-do_xmodem_recv:		jmp XModemRcv
+do_xmodem_recv:		jsr XModemRcv
+					jmp loop
 
 BYTES_TO_DUMP	= 16
 LINES_TO_DUMP   = 16
@@ -136,11 +137,12 @@ return_to_mon_loop:
 help:
 				putsln "Roach Monitor Help"
 				putsln ""
-				putsln "h - Print help"
-				putsln "d - Dump memory location"
-				putsln "b - Start Microsoft Basic"
-				putsln "u - Start disassembler"
-				putsln "x - Receive data via XModem/CRC and place into memory" 
+				putsln "h       - Print help"
+				putsln "d<xxxx> - Dump memory location"
+				putsln "b       - Start Microsoft Basic"
+				putsln "u       - Start disassembler"
+				putsln "x       - Receive data via XModem/CRC and place into memory"
+				putsln "          First two bytes should specify start location" 
 				putsln ""
 				jmp loop
 .endproc
