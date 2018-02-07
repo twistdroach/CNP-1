@@ -23,9 +23,27 @@ nmi:             rti
 irq:             rti
 
 main:
+				 cld					;clear decimal mode
+				 
+				 lda #0					;clear zero and stack pages
+				 ldy #0
+				 sta 00
+				 sta 01
+st_zp:									; clear zero page
+				 sta (00),y
+				 iny
+				 bne st_zp
+				 
+				 tay					; clear stack page
+				 inc 01
+st_sp:
+				 sta (00),y
+				 iny
+				 bne st_sp				 
+				 
 				 ldx #$FF				;set stack pointer
 				 txs
-				 cld					;clear decimal mode
+
 				 jsr initialize
 				 
 ;;;post			 

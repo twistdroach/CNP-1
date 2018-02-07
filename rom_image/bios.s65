@@ -50,8 +50,10 @@ initialize:
 ;;;;;;;;;;;;;;;;;;;;;;;;;; POST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 .export test_memory
 .proc test_memory
-				 puts "Testing RAM Page $05"
-				 lda #>(__RAM_START__)
+END_PAGE=$40			; end page is not inclusive
+START_PAGE=$02
+				 puts "Testing RAM Page $03"
+				 lda #START_PAGE
 				 tax
 				 jsr test_page
 
@@ -73,7 +75,7 @@ loop:			 inx 						; move to next page
 				 lda SCRATCH+2
 				 jsr write_char
 				 txa
-				 cmp #>(__RAM_START__ + __RAM_SIZE__)
+				 cmp #END_PAGE
 				 beq exit_memtest
 				 jsr test_page
 				 jmp loop
