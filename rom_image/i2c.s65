@@ -41,8 +41,8 @@
    down, but here we'll go with pull down only, and use the passive pull-up
    resistors for both data and clock.  The way to do that with the 6522 VIA is
    to put a "0" in the output register bit of interest, then set the
-   corresponding bit in the data-direction register (DDRA in this case) to make
-   the line an output and pull it down, or clear the DDRA bit to make the line
+   corresponding bit in the data-direction register (DDR_I2C in this case) to make
+   the line an output and pull it down, or clear the DDR_I2C bit to make the line
    an input and let it float up by the pull-up resistor.
 */
 
@@ -53,37 +53,39 @@
 I2C_TEMP: .res 1
 
 .include "io.inc65"
+DDR_I2C=DDRA
+PORT_I2C=PA
 
 .code
 .macro I2C_DATA_UP
              LDA   #%10000000   ; Two instructions here.  Clear bit 7 of the DDR
-             TRB   DDRA         ; to make PA7 an input and let it float up.
+             TRB   DDR_I2C         ; to make PA7 an input and let it float up.
 .endmacro
  ;-----------------------
 
 .macro I2C_DATA_DN
              LDA   #%10000000   ; Two instructions here.  Set bit 7 of the DDR
-             TSB   DDRA         ; to make PA7 an output and pull it down since
+             TSB   DDR_I2C         ; to make PA7 an output and pull it down since
 .endmacro		                ; bit 7 of the output register is a 0.
  ;-----------------------
 
 .macro I2C_CLK_UP             ; (as above)
              LDA   #1
-             TRB   DDRA
+             TRB   DDR_I2C
 .endmacro
  ;-----------------------
 
 .macro I2C_CLK_DN              ; (as above)
              LDA   #1
-             TSB   DDRA
+             TSB   DDR_I2C
 .endmacro
  ;-----------------------
 .export I2C_START
 I2C_START:   I2C_DATA_UP
              I2C_CLK_UP
              I2C_DATA_DN
- ist1:       INC   DDRA         ; Clk down.  We now know the bit val, so just INC.
-             TRB   DDRA         ; Data up, using accum val left from I2C_DATA_DN above.
+ ist1:       INC   DDR_I2C         ; Clk down.  We now know the bit val, so just INC.
+             TRB   DDR_I2C         ; Data up, using accum val left from I2C_DATA_DN above.
              RTS
  ;-----------------------
 .export I2C_STOP
@@ -95,7 +97,7 @@ I2C_STOP:    I2C_DATA_DN
 .export I2C_ACK
 I2C_ACK:     I2C_DATA_DN        ; Acknowledge.  The ACK bit in I2C is the 9th bit of a "byte".
  ia1:        I2C_CLK_UP         ;               and acknowledging consists of pulling it down.
-             INC   DDRA         ; Clk down.  We know the bit val, so just INC.
+             INC   DDR_I2C         ; Clk down.  We know the bit val, so just INC.
              I2C_DATA_UP
              RTS
  ;-----------------------
@@ -106,16 +108,16 @@ I2C_NAK:     I2C_DATA_UP        ; Not acknowledge.
 
 CHECK_I2C_ACK_BIT:    I2C_DATA_UP        ; At end, N=0 means ACK.  N=1 means NAK.
              I2C_CLK_UP
-             BIT   PA           ; Bit 7 (the data line) gets put in the N flag.
-             TSB   DDRA         ; Clk down.  Accum still has 1 from I2C_CLK_UP.  Take advantage.
+             BIT   PORT_I2C           ; Bit 7 (the data line) gets put in the N flag.
+             TSB   DDR_I2C         ; Clk down.  Accum still has 1 from I2C_CLK_UP.  Take advantage.
              RTS
  ;-----------------------
 .export INIT_I2C
 INIT_I2C:                       ; Set up the port bit directions and values.  Leaves power off, clk & data low.
 
         LDA     #%10000001               ; Put 10000001B in A for data and clock lines on port A.
-        TSB     DDRA            ; Make PA0 and PA7 outputs to hold clock and data low while power is off,
-        TRB     PA              ; and make the output value to be 0 for the same.
+        TSB     DDR_I2C            ; Make PA0 and PA7 outputs to hold clock and data low while power is off,
+        TRB     PORT_I2C              ; and make the output value to be 0 for the same.
         RTS                     ; You might want to leave a delay to let the power die out so devices are really
  ;------------------            ;    cleared before turning it back on.  Then you shouldn't need CLR_I2C below.
 .export CLR_I2C
@@ -124,8 +126,8 @@ CLR_I2C:                        ; This clears any unwanted transaction that migh
         JSR     I2C_START
         I2C_DATA_UP             ; Keep data line released so we don't ACK any byte sent by a device.
         LDX     #9              ; Loop 9x to send 9 clock pulses to finish any byte a device might send.
- ci2c:     DEC  DDRA            ; Like I2C_CLK_UP since we know I2C_START left clock down (DDRA bit 0 high).
-           INC  DDRA            ; Like I2C_CLK_DN since we know the state from the above instruction.
+ ci2c:     DEC  DDR_I2C            ; Like I2C_CLK_UP since we know I2C_START left clock down (DDR_I2C bit 0 high).
+           INC  DDR_I2C            ; Like I2C_CLK_DN since we know the state from the above instruction.
            DEX
         BNE     ci2c
         JSR     I2C_START
@@ -136,12 +138,12 @@ SEND_I2C_BYTE:                  ; Start with byte in A, and clock low.  Ends wit
         STA     I2C_TEMP        ; Store the byte in a variable so we can use A with TSB & TRB for data line.
         LDA     #%10000000      ; Init A for mask for TRB & TSB below.  A does not get disturbed below.
         LDX     #8              ; We will do 8 bits.
- sIb2:     TRB  DDRA            ; Release data line.  This is like I2C_DATA_UP but saves 1 instruction.
+ sIb2:     TRB  DDR_I2C            ; Release data line.  This is like I2C_DATA_UP but saves 1 instruction.
            ASL  I2C_TEMP        ; Get next bit to send and put it in the C flag.
            BCS  sIb1
-              TSB DDRA          ; If the bit was 0, pull data line down by making it an output.
- sIb1:     DEC  DDRA            ; Do a high pulse on the clock line.  Remember there's a 0 in the output
-           INC  DDRA            ; register bit, and DEC'ing DDRA makes that bit an input, so it can float up.
+              TSB DDR_I2C          ; If the bit was 0, pull data line down by making it an output.
+ sIb1:     DEC  DDR_I2C            ; Do a high pulse on the clock line.  Remember there's a 0 in the output
+           INC  DDR_I2C            ; register bit, and DEC'ing DDR_I2C makes that bit an input, so it can float up.
            DEX                  ;    IOW, it's backwards from what it seems.
         BNE     sIb2
         JMP     CHECK_I2C_ACK_BIT        ; (JSR, RTS)
@@ -150,12 +152,12 @@ SEND_I2C_BYTE:                  ; Start with byte in A, and clock low.  Ends wit
 RCV_I2C_BYTE:                   ; Start with clock low.  Ends with byte in A (formerly I2C_TEMP).  Do ACK bit separately.
         I2C_DATA_UP             ; Make sure we're not holding the data line down.  Be ready to input data.
         LDX     #8              ; We will do 8 bits.  There's no need to init I2C_TEMP.
- rIb1:     DEC  DDRA            ; Set clock line high.
+ rIb1:     DEC  DDR_I2C            ; Set clock line high.
            ASL  I2C_TEMP        ; Get the forming byte's next bit position ready to accept the bit.
-           BIT  PA              ; Read the data line value into N flag.
+           BIT  PORT_I2C              ; Read the data line value into N flag.
            BPL  rIb2            ; If the data line was high,
               INC  I2C_TEMP     ; increment the 1's place to a 1 in the forming byte.  (ASL made bit 0 = 0.)
- rIb2:     INC  DDRA            ; Put clock line back low.
+ rIb2:     INC  DDR_I2C            ; Put clock line back low.
            DEX
         BNE     rIb1            ; Go back for next bit if there is one.
         LDA I2C_TEMP
@@ -175,34 +177,34 @@ other bits would require using AND to test them, which, depending on how you do 
 in handling the value in the accumulator.  The way it is done above in SEND_I2C_BYTE above leaves the accumulator
 undisturbed.  To test bit 4 for example, you could do:
 
-        LDA  PA
+        LDA  PORT_I2C
         AND  #00010000B
         BNE  ...             ; (or BEQ)
 
 or to release it in I2C so the pull-up resistor can make it float up:
 
-        LDA  DDRA
+        LDA  DDR_I2C
         AND  #11101111B
-        STA  DDRA
+        STA  DDR_I2C
 
 or to pull it down:
 
-        LDA  DDRA
+        LDA  DDR_I2C
         ORA  #00010000B
-        STA  DDRA
+        STA  DDR_I2C
 
 or for an up-down clock pulse:
 
-        LDA  DDRA
+        LDA  DDR_I2C
         AND  #11101111B
-        STA  DDRA
+        STA  DDR_I2C
         ORA  #00010000B
-        STA  DDRA
+        STA  DDR_I2C
 
 which is more instructions and bytes than
 
-        DEC  DDRA
-        INC  DDRA
+        DEC  DDR_I2C
+        INC  DDR_I2C
 
 like we can do with the clock on bit 0.
 
