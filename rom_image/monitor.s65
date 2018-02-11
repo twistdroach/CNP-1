@@ -6,6 +6,8 @@
 					.include "osi_bas.inc65"
 					.include "disasm.inc65"
 					.include "xmodem.inc65"
+					
+					.include "display_driver.inc65"
 
 					.zeropage
 					MON_MEM_PTR:	.res 2
@@ -41,6 +43,8 @@ loop:
 				beq do_disassembler
 				cmp #'x'
 				beq do_xmodem_recv
+				cmp #'t'
+				beq do_test
 				putsln "Unknown Command"
 				jmp loop
 				;;the commented code just echos back
@@ -55,6 +59,16 @@ do_disassembler:	jsr DISASM_START
 					putsln ""
 					jmp loop
 do_xmodem_recv:		jsr XModemRcv
+					jmp loop
+do_test:
+					lda #'T'
+					jsr display_write
+					lda #'e'
+					jsr display_write
+					lda #'s'
+					jsr display_write
+					lda #'t'
+					jsr display_write
 					jmp loop
 
 BYTES_TO_DUMP	= 16

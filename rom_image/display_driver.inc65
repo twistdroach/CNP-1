@@ -1,0 +1,5 @@
+.ifndef __DISPLAY_DRIVER_H__
+__DISPLAY_DRIVER_H__ = 1
+.import display_initialize
+.import display_write
+.endif

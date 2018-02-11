@@ -7,6 +7,7 @@
 				.include "hex_string_utils.inc65"
 				.include "i2c.inc65"
 				.include "i2c_keyboard.inc65"
+				.include "display_driver.inc65"
 				.import   __RAM_START__, __RAM_SIZE__
 
 
@@ -37,7 +38,9 @@ initialize:
 				jsr INIT_I2C
 				
 				;;;; I2C Keyboard Interface
-				       
+				
+				;;;; Display Init
+				jsr display_initialize
 
 				;;;; Splash screen
 				putsln .concat("CNP-1 (build ", .string(.time), ")")
