@@ -10,5 +10,7 @@ __BIOS_H__  = 1
 .import get_line
 .import char_avail
 .import read_char_nonblocking
+.import irq_handler
+.import nmi_handler
 
 .endif

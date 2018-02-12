@@ -10,17 +10,13 @@
 
                  .segment "VECTORS"
 
-                 .word   nmi
+                 .word   nmi_handler
                  .word   reset
-                 .word   irq
+                 .word   irq_handler
 
                  .code
 
 reset:           jmp main
-
-nmi:             rti
-
-irq:             rti
 
 main:
 				 cld					;clear decimal mode

@@ -50,6 +50,22 @@ initialize:
 				putsln ""
 				
 				rts
+				
+;;;;;;;;;;;;;;;;;;;;;;;;;; IRQ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+.bss
+UPTIME:			.res 2
+
+.code
+.export irq_handler
+.proc irq_handler
+				
+				rti
+.endproc
+
+.export nmi_handler
+.proc nmi_handler
+				rti
+.endproc
 ;;;;;;;;;;;;;;;;;;;;;;;;;; POST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 .export test_memory
 .proc test_memory
