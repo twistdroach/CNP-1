@@ -10,7 +10,7 @@
 					.include "display_driver.inc65"
 
 					.zeropage
-					MON_MEM_PTR:	.res 2
+MON_MEM_PTR:		.res 2
 
 					.bss
 BUFFER_LENGTH		=	60
@@ -19,7 +19,7 @@ tmp_hex_string:		.res 3
 
 
 					.code
-					
+;;;;;;;;;;;;;;;;;;;;;;;; Main monitor entry point
 .export monitor_entry
 .proc monitor_entry
 				putsln "Welcome to the Roach Monitor"
@@ -45,12 +45,10 @@ loop:
 				beq do_xmodem_recv
 				cmp #'t'
 				beq do_test
+				cmp #'j'
+				beq do_jump
 				putsln "Unknown Command"
 				jmp loop
-				;;the commented code just echos back
-		;		lda #>buffer
-		;		ldy #<buffer
-		;		jsr write_bufferln
 
 do_help:			jmp help
 do_dump:			jmp dump
@@ -60,6 +58,7 @@ do_disassembler:	jsr DISASM_START
 					jmp loop
 do_xmodem_recv:		jsr XModemRcv
 					jmp loop
+do_jump:			jmp jump
 do_test:
 					lda #'T'
 					jsr display_write
@@ -71,6 +70,22 @@ do_test:
 					jsr display_write
 					jmp loop
 
+;;;;;;;;;;;;;;;;;;;;;;;; Jump to location and execute
+					.bss
+JUMP_PTR:			.res 2
+					.code
+.proc jump
+				ld16 R0, (buffer+1)		; Parse the location specified
+				jsr scan_hex16
+
+				lda RES+1
+				sta MON_MEM_PTR+1
+				lda RES
+				sta MON_MEM_PTR				
+				jmp (MON_MEM_PTR)
+.endproc
+
+;;;;;;;;;;;;;;;;;;;;;;;; Dump a page of memory
 BYTES_TO_DUMP	= 16
 LINES_TO_DUMP   = 16
 dump:
@@ -148,6 +163,7 @@ return_to_mon_loop:
 				putsln ""
 				jmp loop
 
+;;;;;;;;;;;;;;;;;;;;;;;; Print a simple help message
 help:
 				putsln "Roach Monitor Help"
 				putsln ""
@@ -156,7 +172,9 @@ help:
 				putsln "b       - Start Microsoft Basic"
 				putsln "u       - Start disassembler"
 				putsln "x       - Receive data via XModem/CRC and place into memory"
-				putsln "          First two bytes should specify start location" 
+				putsln "          First two bytes should specify start location"
+				putsln "t       - Test writing directly to display"
+				putsln "j<xxxx> - Jump to address and begin execution"
 				putsln ""
 				jmp loop
 .endproc
