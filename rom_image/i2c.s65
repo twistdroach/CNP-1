@@ -53,8 +53,8 @@
 I2C_TEMP: .res 1
 
 .include "io.inc65"
-DDR_I2C=DDRA
-PORT_I2C=PA
+DDR_I2C=DDRB
+PORT_I2C=PB
 
 .code
 .macro I2C_DATA_UP
