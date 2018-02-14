@@ -19,6 +19,7 @@
 reset:           jmp main
 
 main:
+				 sei					;disable interrupts
 				 cld					;clear decimal mode
 				 
 				 lda #0					;clear zero and stack pages
