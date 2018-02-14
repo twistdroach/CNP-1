@@ -47,6 +47,7 @@ initialize:
 				putsln "16K RAM $0000 to $3FFF"
 				putsln "32k ROM $8000 to $FFFF"
 				putsln "6551 ACIA at $4400"
+				putsln "6522 VIA at $6000"
 				putsln ""
 				
 				rts
