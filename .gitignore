@@ -4,4 +4,5 @@
 *.list
 *.lst
 *.swp
+*.debug
 rom.bin
