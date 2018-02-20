@@ -1,6 +1,3 @@
-#ca65 -o testexec.o testexec.s65
-#cl65 testexec.o --target none --start-addr 0x1000 -o test.o
-
 CA=ca65
 LD=ld65
 
