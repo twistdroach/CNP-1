@@ -4,37 +4,92 @@
 PORTA=0										; used to shift control bits (PCR), don't modify
 PORTB=1				
 
-DISP_PORT=PB								; these define the actual locations to use
-DISP_DDR=DDRB
+DISP_PORT=PA								; these define the actual locations to use
+DISP_DDR=DDRA
 DISP_PCR=PCR
 DISP_IFR=IFR
-USING_PORT=PORTB
+USING_PORT=PORTA
 
 .export display_initialize
 .proc display_initialize					; Destroys A, no input parameters or return values
 				lda #$FF					; Set the VIA port for output
 				sta DISP_DDR
-											; Set the VIA port for handshake mode
+											; Set the VIA port for output handshake mode
 				.if (.match(USING_PORT, PORTA))
-				lda #%00001000	
+				lda #%00001011	
 				.else
-				lda #%10000000
+				lda #%10010000
 				.endif
-				tsb DISP_PCR
+				and DISP_PCR
+				sta DISP_PCR
 
 				rts		
 .endproc
 
 .export display_write
 .proc display_write							; Expects value to write in A, no return value
-				sta DISP_PORT
+											; Destroys X
+				tax
+				
 poll_for_data_taken:				
+				lda DISP_IFR
 				.if (.match(USING_PORT, PORTA))
-				lda #%00000001
+				and #%00000010
 				.else
-				lda #%00001000
+				and #%00010000
 				.endif
-				and DISP_IFR
 				beq poll_for_data_taken
+				
+				stx DISP_PORT
+				rts
+.endproc
+
+.export display_initialize2
+.proc display_initialize2					; Destroys A, no input parameters or return values
+				lda #$FF					; Set the VIA port for output
+				sta DISP_DDR
+											; Set the VIA port for output handshake mode
+				.if (.match(USING_PORT, PORTA))
+				lda #%00001101	
+				.else
+				lda #%11010000
+				.endif
+				and DISP_PCR
+				sta DISP_PCR
+
+				rts		
+.endproc
+
+
+
+.export display_write2
+.proc display_write2						; Expects value to write in A, no return value
+											; Destroys X
+				tax
+				
+poll_for_data_taken:				
+				lda DISP_IFR
+				.if (.match(USING_PORT, PORTA))
+				clc
+				lsr
+				bcs CA2_is_one
+				;CA2 is zero
+				lsr
+				bcs poll_for_data_taken ;ca2 was zero, ca1 was not				
+				jmp done
+CA2_is_one:
+				clc
+				lsr
+				bcc	poll_for_data_taken		; ca2 was one, ca1 was zero	
+				.else
+				and #%00010000
+				beq poll_for_data_taken
+				.endif
+				
+done:				
+				stx DISP_PORT
+				lda #%00000010				; toggle bit to indicate write
+				eor DISP_PCR
+				sta DISP_PCR
 				rts
 .endproc

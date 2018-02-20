@@ -3,7 +3,7 @@
 					.include "macros.inc65"
 					.include "bios.inc65"
 					.include "hex_string_utils.inc65"
-					.include "osi_bas.inc65"
+					.include "ehbasic.inc65"
 					.include "disasm.inc65"
 					.include "xmodem.inc65"
 					
@@ -45,6 +45,8 @@ loop:
 				beq do_xmodem_recv
 				cmp #'t'
 				beq do_test
+				cmp #'2'
+				beq do_test2
 				cmp #'j'
 				beq do_jump
 				putsln "Unknown Command"
@@ -62,12 +64,31 @@ do_jump:			jmp jump
 do_test:
 					lda #'T'
 					jsr display_write
+					jsr write_char
 					lda #'e'
 					jsr display_write
+					jsr write_char
 					lda #'s'
 					jsr display_write
+					jsr write_char
 					lda #'t'
 					jsr display_write
+					jsr write_char
+					jmp loop
+do_test2:
+					jsr display_initialize2
+					lda #'T'
+					jsr display_write2
+					jsr write_char
+					lda #'e'
+					jsr display_write2
+					jsr write_char
+					lda #'s'
+					jsr display_write2
+					jsr write_char
+					lda #'t'
+					jsr display_write2
+					jsr write_char
 					jmp loop
 
 ;;;;;;;;;;;;;;;;;;;;;;;; Jump to location and execute
@@ -174,6 +195,7 @@ help:
 				putsln "x       - Receive data via XModem/CRC and place into memory"
 				putsln "          First two bytes should specify start location"
 				putsln "t       - Test writing directly to display"
+				putsln "2       - Test writing directly to display (v2)"
 				putsln "j<xxxx> - Jump to address and begin execution"
 				putsln ""
 				jmp loop

@@ -1,0 +1,6 @@
+.ifndef __EHBASIC_H__
+__EHBASIC_H__  = 1
+
+.import COLD_START
+
+.endif
