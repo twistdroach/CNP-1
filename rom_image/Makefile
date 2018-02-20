@@ -12,7 +12,7 @@ rom: $(ASM_SOURCES:.s65=.o)
 	$(LD) -C cnp-1.cfg -vm -m $(PGM).map -o $(PGM).rom $^
 
 %.o: %.s65
-	$(CA) -o $@ -l $(@:.o=.lst) $<
+	$(CA) -g -o $@ -l $(@:.o=.lst) $<
 
 clean:
 	rm -f *.o *.rom *.map *.lst

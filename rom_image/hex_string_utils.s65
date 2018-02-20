@@ -1,3 +1,5 @@
+.setcpu "65c02"
+
 .include "macros.inc65"
 .include "bios.inc65"
 
@@ -75,7 +77,8 @@ fmt_hex_char:       cmp #10
 ; The string is written into (R0)..(R0)+2 (3 bytes)
 .export fmt_hex_string
 fmt_hex_string:     sta TMP0
-                    phay
+                    pha
+                    phy
                     ldy #0
                     lda TMP0
                     lsr
@@ -92,7 +95,8 @@ fmt_hex_string:     sta TMP0
                     iny
                     lda #0
                     sta (R0),y
-                    play
+                    pla
+                    ply
                     rts
 
 ; Convert the hex character in the accu to its integer value
@@ -146,7 +150,8 @@ scan_hex:           tya
 ; Convert four hex characters starting at (R0) into an integer value
 ; The integer value is returned in RES..RES+1
 .export scan_hex16
-scan_hex16:         phay
+scan_hex16:         pha
+					phy
                     ldy #0
                     lda (R0),y
                     jsr scan_hex_char
@@ -173,7 +178,8 @@ scan_hex16:         phay
                     jsr scan_hex_char
                     ora RES
                     sta RES
-                    play
+                    pla
+                    ply
                     rts
 
 

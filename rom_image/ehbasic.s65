@@ -426,6 +426,8 @@ ccflag		= $0200	; BASIC CTRL-C flag, 00 = enabled, 01 = dis
 ccbyte		= ccflag+1	; BASIC CTRL-C byte
 ccnull		= ccbyte+1	; BASIC CTRL-C byte timeout
 
+VEC_CC		= ccnull+1	; ctrl c check vector
+
 ; Ibuffs can now be anywhere in RAM, ensure that the max length is < $80
 Ibuffs		= $0401
 					; start of input buffer after IRQ/NMI code
@@ -1572,8 +1574,7 @@ LAB_1609
 ; key press is detected.
 
 LAB_1629
-	;JMP	(VEC_CC)		; ctrl c check vector
-	rts  ;;;;;TODO fix this
+	JMP	(VEC_CC)		; ctrl c check vector
 
 ; if there was a key press it gets back here ..
 
