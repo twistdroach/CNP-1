@@ -12,13 +12,13 @@ ASM_SOURCES = $(notdir $(wildcard $(SRC_DIR)/*.s65))
 all: rom
 
 rom: $(ASM_SOURCES:%.s65=$(OBJ_DIR)/%.o)
-	$(LD) -C cnp-1.cfg -v -vm -m $(PGM).map -o $(PGM).rom $^
+	$(LD) -C cnp-1.cfg -v -Ln $(PGM).debug -vm -m $(PGM).map -o $(PGM).rom $^
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s65
 	$(CA) -g -Iinclude/ -v -o $@ -l $(@:.o=.lst) $<
 
 clean:
-	rm -f $(OBJ_DIR)/*.o *.rom *.map $(OBJ_DIR)/*.lst
+	rm -f $(OBJ_DIR)/*.o *.debug *.rom *.map $(OBJ_DIR)/*.lst
 
 flash: clean all
 	$(MINIPRO) -p at28c256 -w $(PGM).rom
