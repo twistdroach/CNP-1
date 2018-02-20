@@ -1,18 +1,24 @@
 CA=ca65
 LD=ld65
+MINIPRO=minipro
 
 PGM=hello_world
-ASM_SOURCES = hello_world.s65 bios.s65 monitor.s65 disasm.s65 hex_string_utils.s65 xmodem.s65 i2c.s65 i2c_keyboard.s65 display_driver.s65 ehbasic.s65
+
+SRC_DIR=src
+OBJ_DIR=obj
+
+ASM_SOURCES = $(notdir $(wildcard $(SRC_DIR)/*.s65))
+
 all: rom
 
-rom: $(ASM_SOURCES:.s65=.o)
-	$(LD) -C cnp-1.cfg -vm -m $(PGM).map -o $(PGM).rom $^
+rom: $(ASM_SOURCES:%.s65=$(OBJ_DIR)/%.o)
+	$(LD) -C cnp-1.cfg -v -vm -m $(PGM).map -o $(PGM).rom $^
 
-%.o: %.s65
-	$(CA) -g -o $@ -l $(@:.o=.lst) $<
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.s65
+	$(CA) -g -Iinclude/ -v -o $@ -l $(@:.o=.lst) $<
 
 clean:
-	rm -f *.o *.rom *.map *.lst
+	rm -f $(OBJ_DIR)/*.o *.rom *.map $(OBJ_DIR)/*.lst
 
 flash: clean all
-	minipro -p at28c256 -w $(PGM).rom
+	$(MINIPRO) -p at28c256 -w $(PGM).rom
