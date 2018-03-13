@@ -59,12 +59,58 @@ UPTIME:			.res 2
 .code
 .export irq_handler
 .proc irq_handler
-				
+				putsln "IRQ received"
 				rti
 .endproc
 
 .export nmi_handler
 .proc nmi_handler
+				cld						;
+				
+				pha						; Preserve registers
+				phx
+				phy
+				tsx						;    Preserve stack pointer
+
+				putsln ""
+				putsln "NMI received"
+								
+				puts "SP:"
+				txa						; Print stack pointer
+				adc #5
+				jsr print_byte_as_hex_chars
+				
+				puts " Y:"
+				inx
+				lda $0100,x
+				jsr print_byte_as_hex_chars
+				
+				puts " X:"
+				inx
+				lda $0100,x
+				jsr print_byte_as_hex_chars
+				
+				puts " A:"
+				inx
+				lda $0100,x
+				jsr print_byte_as_hex_chars
+				
+				inx
+				inx
+				puts " PC:"
+				inx
+				lda $0100,x
+				jsr print_byte_as_hex_chars
+				dex
+				lda $0100,x
+				jsr print_byte_as_hex_chars
+				
+				putsln ""
+				
+				ply						; Restore registers
+				plx
+				pla
+				
 				rti
 .endproc
 ;;;;;;;;;;;;;;;;;;;;;;;;;; POST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
