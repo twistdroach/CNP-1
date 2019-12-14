@@ -14,7 +14,10 @@ all: rom
 rom: $(ASM_SOURCES:%.s65=$(OBJ_DIR)/%.o)
 	$(LD) -C cnp-1.cfg -v -Ln $(PGM).debug -vm -m $(PGM).map -o $(PGM).rom $^
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.s65
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.s65 | $(OBJ_DIR)
 	$(CA) -g -Iinclude/ -v -o $@ -l $(@:.o=.lst) $<
 
 clean:
