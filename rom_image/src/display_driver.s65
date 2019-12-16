@@ -10,6 +10,88 @@ DISP_PCR=PCR
 DISP_IFR=IFR
 USING_PORT=PORTA
 
+DISP_DATA_DDR=DDRA
+DISP_HANDSHAKE_DDR=DDRB
+DISP_DATA=PA
+DISP_HANDSHAKE=PB
+
+.macro wait_for_avail_equal_ack
+				.scope
+				; LDA #$08
+				; AND FLAGS
+				; BNE Bit3IsSet
+				; BEQ Bit3isClear
+
+				lda #%00000010				; Check if avail is low or high
+				and DISP_HANDSHAKE
+				bne wait_for_ack_high		; Avail is high
+
+wait_for_ack_low:							; avail is low
+				lda #%00000100
+				and DISP_HANDSHAKE
+				bne wait_for_ack_low
+				beq exit
+
+wait_for_ack_high:
+				lda #%00000100
+				and DISP_HANDSHAKE
+				beq wait_for_ack_high			
+
+exit:
+				.endscope
+.endmacro
+
+.macro invert_avail_bit
+				.scope
+				lda DISP_HANDSHAKE
+				eor #%00000010
+				sta DISP_HANDSHAKE
+				.endscope
+.endmacro
+
+;Initialize for 8 bit interface
+;  Data  -> PA0-7 (output) Data to be displayed
+;  Avail -> PB1   (output) Flip when new data available
+;  Ack   -> PB2   (input)  Set to same value as Avail when data is consumed
+
+;  Steps to initialize
+;  Set PA0-7 for output
+;  Set PB1 for output
+;  Set PB2 for input
+;  Set a value for avail
+;  Wait until Ack == Avail
+.export display_initialize
+.proc display_initialize
+				lda #$FF					; Set PA0-7 for output
+				sta DISP_DATA_DDR
+
+				lda DISP_HANDSHAKE_DDR
+				ora #%00000010				; Set PB1 for output
+				and #%11111011				; Set PB2 for input
+				sta	DISP_HANDSHAKE_DDR
+
+				invert_avail_bit
+				wait_for_avail_equal_ack	; Wait for display system to signal initialization is complete
+				rts
+.endproc
+
+;Send value in accumulator to display
+;Steps:
+; Copy accumulator to DISP_DATA
+; Toggle Avail
+; Wait for Ack == Avail
+.export display_write
+.proc display_write
+				pha
+				sta DISP_DATA
+				invert_avail_bit
+				wait_for_avail_equal_ack
+				pla
+				rts
+.endproc
+
+
+.if 0
 .export display_initialize
 .proc display_initialize					; Destroys A, no input parameters or return values
 				lda #$FF					; Set the VIA port for output
@@ -43,6 +125,8 @@ poll_for_data_taken:
 				stx DISP_PORT
 				rts
 .endproc
+.endif
+
 
 .export display_initialize2
 .proc display_initialize2					; Destroys A, no input parameters or return values

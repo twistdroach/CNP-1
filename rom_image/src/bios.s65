@@ -1,5 +1,7 @@
 				.setcpu "65c02"
-				
+				;USE_I2C_INPUT=1      ; Uncomment to enable i2c keyboard
+				USE_DISPLAY=1
+
 				.include "io.inc65"
 				.include "macros.inc65"
 				.include "monitor.inc65"
@@ -35,12 +37,16 @@ initialize:
 				sta ACIA_CONTROL
 
 				;;;; I2C
+				.ifdef USE_I2C_INPUT
 				jsr INIT_I2C
 				
 				;;;; I2C Keyboard Interface
-				
+				.endif
+
+				.ifdef USE_DISPLAY
 				;;;; Display Init
 				jsr display_initialize
+				.endif
 
 				;;;; Splash screen
 				putsln ""
@@ -131,9 +137,9 @@ START_PAGE=$02
 				 lda #<SCRATCH
 				 sta R0
 loop:			 inx 						; move to next page
-				 lda #$1B					; move cursor back 2 and print page
+				 lda #$08
 				 jsr write_char
-				 puts "[2D"
+				 jsr write_char
 				 txa
 				 jsr fmt_hex_string
 				 lda SCRATCH
@@ -257,6 +263,9 @@ exit:			ply
 delay:			dec
 				bne delay
 				pla
+.ifdef USE_DISPLAY
+				jsr display_write
+.endif
 				rts
 .endproc
 
@@ -275,7 +284,7 @@ get_char:
 				rts
 .endproc
 
-;USE_I2C_INPUT=1
+
 ;;;;machine specific
 .export read_char
 .proc read_char
