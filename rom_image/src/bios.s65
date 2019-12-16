@@ -43,6 +43,8 @@ initialize:
 				jsr display_initialize
 
 				;;;; Splash screen
+				putsln ""
+				putsln ""
 				putsln .concat("CNP-1 (build ", .string(.time), ")")
 				putsln "16K RAM $0000 to $3FFF"
 				putsln "32k ROM $8000 to $FFFF"
