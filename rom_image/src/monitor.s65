@@ -45,8 +45,6 @@ loop:
 				beq do_xmodem_recv
 				cmp #'t'
 				beq do_test
-				cmp #'2'
-				beq do_test2
 				cmp #'j'
 				beq do_jump
 				putsln "Unknown Command"
@@ -73,21 +71,6 @@ do_test:
 					jsr write_char
 					lda #'t'
 					jsr display_write
-					jsr write_char
-					jmp loop
-do_test2:
-					jsr display_initialize2
-					lda #'T'
-					jsr display_write2
-					jsr write_char
-					lda #'e'
-					jsr display_write2
-					jsr write_char
-					lda #'s'
-					jsr display_write2
-					jsr write_char
-					lda #'t'
-					jsr display_write2
 					jsr write_char
 					jmp loop
 
