@@ -1,20 +1,17 @@
 				.setcpu "65c02"
 				
 				.include "io.inc65"
-PORTA=0										; used to shift control bits (PCR), don't modify
-PORTB=1				
 
-DISP_PORT=PA								; these define the actual locations to use
-DISP_DDR=DDRA
-DISP_PCR=PCR
-DISP_IFR=IFR
-USING_PORT=PORTA
+
 
 DISP_DATA_DDR=DDRA
 DISP_HANDSHAKE_DDR=DDRB
 DISP_DATA=PA
 DISP_HANDSHAKE=PB
+DISP_PCR=PCR
+DISP_IFR=IFR
 
+.ifdef ASDF
 .macro wait_for_avail_equal_ack
 				.scope
 				; LDA #$08
@@ -90,90 +87,37 @@ exit:
 				rts
 .endproc
 
-
-.if 0
-.export display_initialize
-.proc display_initialize					; Destroys A, no input parameters or return values
-				lda #$FF					; Set the VIA port for output
-				sta DISP_DDR
-											; Set the VIA port for output handshake mode
-				.if (.match(USING_PORT, PORTA))
-				lda #%00001011	
-				.else
-				lda #%10010000
-				.endif
-				and DISP_PCR
-				sta DISP_PCR
-
-				rts		
-.endproc
-
-.export display_write
-.proc display_write							; Expects value to write in A, no return value
-											; Destroys X
-				tax
-				
-poll_for_data_taken:				
-				lda DISP_IFR
-				.if (.match(USING_PORT, PORTA))
-				and #%00000010
-				.else
-				and #%00010000
-				.endif
-				beq poll_for_data_taken
-				
-				stx DISP_PORT
-				rts
-.endproc
 .endif
 
+.export display_initialize
+.proc display_initialize
+				lda #$FF					; Set PA0-7 for output
+				sta DISP_DATA_DDR
 
-.export display_initialize2
-.proc display_initialize2					; Destroys A, no input parameters or return values
-				lda #$FF					; Set the VIA port for output
-				sta DISP_DDR
-											; Set the VIA port for output handshake mode
-				.if (.match(USING_PORT, PORTA))
-				lda #%00001101	
-				.else
-				lda #%11010000
-				.endif
-				and DISP_PCR
+				lda DISP_PCR				; Set CA2 for handshake output
+				ora #%00001000
+				and #%11111001
 				sta DISP_PCR
 
-				rts		
+
 .endproc
 
+.macro wait_for_ack
+.scope
+wait:   		lda     DISP_IFR    ; busy wait for IFR bit 1 to go high
+        		and     #$02
+        		beq     wait
 
+        		lda     #$FF
+        		sta     DISP_IFR    ; clear the interrupt register
+.endscope
+.endmacro
 
-.export display_write2
-.proc display_write2						; Expects value to write in A, no return value
-											; Destroys X
-				tax
-				
-poll_for_data_taken:				
-				lda DISP_IFR
-				.if (.match(USING_PORT, PORTA))
-				clc
-				lsr
-				bcs CA2_is_one
-				;CA2 is zero
-				lsr
-				bcs poll_for_data_taken ;ca2 was zero, ca1 was not				
-				jmp done
-CA2_is_one:
-				clc
-				lsr
-				bcc	poll_for_data_taken		; ca2 was one, ca1 was zero	
-				.else
-				and #%00010000
-				beq poll_for_data_taken
-				.endif
-				
-done:				
-				stx DISP_PORT
-				lda #%00000010				; toggle bit to indicate write
-				eor DISP_PCR
-				sta DISP_PCR
-				rts
+.export display_write
+.proc display_write
+			pha
+			wait_for_ack
+			pla
+			sta DISP_DATA
+			rts
 .endproc

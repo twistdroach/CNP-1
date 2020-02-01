@@ -2,6 +2,4 @@
 __DISPLAY_DRIVER_H__ = 1
 .import display_initialize
 .import display_write
-.import display_initialize2
-.import display_write2
 .endif
