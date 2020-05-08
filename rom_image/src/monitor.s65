@@ -18,6 +18,15 @@ buffer:				.res BUFFER_LENGTH
 tmp_hex_string:		.res 3  
 
 
+.macro setPixel xval, yval
+					lda #$05
+					jsr display_write
+					lda #xval
+					jsr display_write
+					lda #yval
+					jsr display_write
+.endmacro
+
 					.code
 ;;;;;;;;;;;;;;;;;;;;;;;; Main monitor entry point
 .export monitor_entry
@@ -60,18 +69,10 @@ do_xmodem_recv:		jsr XModemRcv
 					jmp loop
 do_jump:			jmp jump
 do_test:
-					lda #'T'
-					jsr display_write
-					jsr write_char
-					lda #'e'
-					jsr display_write
-					jsr write_char
-					lda #'s'
-					jsr display_write
-					jsr write_char
-					lda #'t'
-					jsr display_write
-					jsr write_char
+					setPixel $01, $01
+					setPixel $0A, $0A
+					setPixel $0B, $0B
+
 					jmp loop
 
 ;;;;;;;;;;;;;;;;;;;;;;;; Jump to location and execute
