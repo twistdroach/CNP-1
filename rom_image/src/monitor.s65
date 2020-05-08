@@ -18,6 +18,15 @@ buffer:				.res BUFFER_LENGTH
 tmp_hex_string:		.res 3  
 
 
+.macro resetPixel xval, yval
+					lda #$06
+					jsr display_write
+					lda #xval
+					jsr display_write
+					lda #yval
+					jsr display_write
+.endmacro
+
 .macro setPixel xval, yval
 					lda #$05
 					jsr display_write
@@ -54,6 +63,8 @@ loop:
 				beq do_xmodem_recv
 				cmp #'t'
 				beq do_test
+				cmp #'r'
+				beq do_retest
 				cmp #'j'
 				beq do_jump
 				putsln "Unknown Command"
@@ -68,11 +79,77 @@ do_disassembler:	jsr DISASM_START
 do_xmodem_recv:		jsr XModemRcv
 					jmp loop
 do_jump:			jmp jump
+do_retest:			jmp do_retest_2
 do_test:
-					setPixel $01, $01
-					setPixel $0A, $0A
-					setPixel $0B, $0B
+					setPixel $02, $00
+					setPixel $03, $00
+					setPixel $04, $00
+					setPixel $05, $00
 
+					setPixel $01, $01
+					setPixel $06, $01
+
+					setPixel $00, $02
+					setPixel $02, $02
+					setPixel $05, $02
+					setPixel $07, $02
+
+					setPixel $00, $03
+					setPixel $07, $03
+
+					setPixel $00, $04
+					setPixel $02, $04
+					setPixel $05, $04
+					setPixel $07, $04
+
+					setPixel $00, $05
+					setPixel $03, $05
+					setPixel $04, $05
+					setPixel $07, $05
+
+					setPixel $01, $06
+					setPixel $06, $06
+
+					setPixel $02, $07
+					setPixel $03, $07
+					setPixel $04, $07
+					setPixel $05, $07
+
+					jmp loop
+do_retest_2:
+					resetPixel $02, $00
+					resetPixel $03, $00
+					resetPixel $04, $00
+					resetPixel $05, $00
+
+					resetPixel $01, $01
+					resetPixel $06, $01
+
+					resetPixel $00, $02
+					resetPixel $02, $02
+					resetPixel $05, $02
+					resetPixel $07, $02
+
+					resetPixel $00, $03
+					resetPixel $07, $03
+
+					resetPixel $00, $04
+					resetPixel $02, $04
+					resetPixel $05, $04
+					resetPixel $07, $04
+
+					resetPixel $00, $05
+					resetPixel $03, $05
+					resetPixel $04, $05
+					resetPixel $07, $05
+
+					resetPixel $01, $06
+					resetPixel $06, $06
+
+					resetPixel $02, $07
+					resetPixel $03, $07
+					resetPixel $04, $07
+					resetPixel $05, $07
 					jmp loop
 
 ;;;;;;;;;;;;;;;;;;;;;;;; Jump to location and execute
@@ -178,8 +255,7 @@ help:
 				putsln "u       - Start disassembler"
 				putsln "x       - Receive data via XModem/CRC and place into memory"
 				putsln "          First two bytes should specify start location"
-				putsln "t       - Test writing directly to display"
-				putsln "2       - Test writing directly to display (v2)"
+				putsln "t/r     - Test writing directly to display"
 				putsln "j<xxxx> - Jump to address and begin execution"
 				putsln ""
 				jmp loop
